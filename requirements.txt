@@ -1,0 +1,5 @@
+streamlit==1.31.0
+playwright==1.41.2
+beautifulsoup4==4.12.3
+requests==2.31.0
+pandas==2.2.0
