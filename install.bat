@@ -1,90 +1,105 @@
 @echo off
-color 0B
 setlocal enabledelayedexpansion
+chcp 65001 >nul
+color 0B
+cd /d "%~dp0"
 
 echo ========================================================
-echo   UNIVERSAL LEAD GENERATOR INSTALLER - Codigo Origami
+echo   UNIVERSAL PROSPECTING PLATFORM - INSTALLER  v9
+echo   Codigo Origami - Alejandro Moreno
 echo ========================================================
 echo.
 
-set "PY_CMD=python"
+:: ------------------------------------------------------------------
+:: 1. Find a compatible Python (3.10 - 3.13). Prefer the "py" launcher.
+:: ------------------------------------------------------------------
+set "PY_CMD="
+for %%V in (3.12 3.13 3.11 3.10) do (
+    if not defined PY_CMD (
+        py -%%V --version >nul 2>&1 && set "PY_CMD=py -%%V"
+    )
+)
+if not defined PY_CMD (
+    python --version >nul 2>&1
+    if !ERRORLEVEL! EQU 0 (
+        for /f "tokens=2" %%I in ('python --version 2^>^&1') do set "PYV=%%I"
+        for /f "tokens=1,2 delims=." %%a in ("!PYV!") do (
+            if "%%a"=="3" if %%b GEQ 10 if %%b LEQ 13 set "PY_CMD=python"
+        )
+    )
+)
+if not defined PY_CMD (
+    if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set "PY_CMD=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+)
 
-:: 1. Detect if Python is installed
-%PY_CMD% --version >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo [INFO] Python not detected on this system.
-    echo [INFO] Downloading the core engine automatically...
-    curl -o python_installer.exe https://www.python.org/ftp/python/3.12.6/python-3.12.6-amd64.exe
-    
+if not defined PY_CMD (
+    echo [INFO] No compatible Python found. Downloading Python 3.12 / Descargando Python 3.12...
+    curl -L -o python_installer.exe https://www.python.org/ftp/python/3.12.6/python-3.12.6-amd64.exe
     if not exist python_installer.exe (
-        echo [ERROR] Could not download the engine. Please check your internet connection.
-        pause
-        exit /b 1
+        echo [ERROR] Download failed. Check your internet connection.
+        echo [ERROR] No se pudo descargar. Revisa tu conexion a internet.
+        goto :error
     )
-
-    echo [INFO] Installing the environment silently ^(this will take 1-2 minutes^)...
-    start /wait python_installer.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0 Include_pip=1
+    echo [INFO] Installing Python silently (1-2 minutes) / Instalando Python (1-2 minutos)...
+    start /wait python_installer.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0 Include_pip=1 Include_launcher=1
     del python_installer.exe
-    
-    echo [INFO] Environment installed successfully.
-    
-    :: Use the direct path since Windows doesn't update the PATH until the console is restarted
     set "PY_CMD=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
-    
-    !PY_CMD! --version >nul 2>&1
+    "!PY_CMD!" --version >nul 2>&1
     if !ERRORLEVEL! NEQ 0 (
-        echo [ERROR] A problem occurred during the automatic installation.
-        echo Please restart your computer and try again.
-        pause
-        exit /b 1
+        echo [ERROR] Python installation failed. Restart the computer and run this again.
+        echo [ERROR] Fallo la instalacion de Python. Reinicia el ordenador y vuelve a ejecutarlo.
+        goto :error
     )
 )
+echo [OK] Python: !PY_CMD!
 
-:: 2. Validate they don't have version 3.14+ (which breaks dependencies)
-for /f "tokens=2" %%I in ('!PY_CMD! --version 2^>^&1') do set PYTHON_VERSION=%%I
-echo Detected Python version: !PYTHON_VERSION!
-
-for /f "tokens=1,2 delims=." %%a in ("!PYTHON_VERSION!") do (
-    set MAJOR=%%a
-    set MINOR=%%b
+:: ------------------------------------------------------------------
+:: 2. Private environment for this app (does not touch other Python apps)
+:: ------------------------------------------------------------------
+if not exist ".venv\Scripts\python.exe" (
+    echo.
+    echo [1/4] Creating private environment / Creando entorno privado...
+    if "!PY_CMD:~0,3!"=="py " (
+        !PY_CMD! -m venv .venv
+    ) else (
+        "!PY_CMD!" -m venv .venv
+    )
+    if not exist ".venv\Scripts\python.exe" goto :error
 )
+set "VPY=.venv\Scripts\python.exe"
 
-if !MINOR! GEQ 14 (
-    echo [ERROR] You have an experimental version of Python ^(3.14+^).
-    echo Please uninstall Python from the Control Panel and run this installer again.
-    pause
-    exit /b 1
-)
-
-:: 3. Strict installation
 echo.
-echo [1/3] Updating pip...
-!PY_CMD! -m pip install --upgrade pip >nul
+echo [2/4] Updating pip / Actualizando pip...
+"%VPY%" -m pip install --upgrade pip --quiet
 if !ERRORLEVEL! NEQ 0 goto :error
 
 echo.
-echo [2/3] Installing required libraries...
-!PY_CMD! -m pip install -r requirements.txt
+echo [3/4] Installing libraries / Instalando librerias...
+"%VPY%" -m pip install -r requirements.txt --quiet
 if !ERRORLEVEL! NEQ 0 goto :error
 
 echo.
-echo [3/3] Installing Playwright Chromium browser...
-!PY_CMD! -m playwright install chromium
+echo [4/4] Installing the Chromium browser / Instalando el navegador Chromium...
+"%VPY%" -m playwright install chromium
 if !ERRORLEVEL! NEQ 0 goto :error
+
+copy /y requirements.txt ".venv\requirements.installed" >nul
+echo ok> ".venv\installed.ok"
 
 echo.
 echo ========================================================
-echo   INSTALLATION COMPLETE!
-echo   You can now close this window and run "start.bat"
+echo   INSTALLATION COMPLETE / INSTALACION COMPLETADA
+echo   Next time just double-click "start.bat"
+echo   La proxima vez solo haz doble clic en "start.bat"
 echo ========================================================
-pause
+if /i not "%~1"=="/auto" pause
 exit /b 0
 
 :error
 echo.
 echo ========================================================
-echo   INSTALLATION FAILED!
-echo   Please resolve the errors mentioned above.
+echo   INSTALLATION FAILED / LA INSTALACION FALLO
+echo   Read the messages above / Lee los mensajes de arriba
 echo ========================================================
 pause
 exit /b 1

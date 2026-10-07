@@ -1,5 +1,8 @@
-streamlit==1.31.0
-playwright==1.41.2
-beautifulsoup4==4.12.3
-requests==2.31.0
-pandas==2.2.0
+streamlit>=1.40,<2
+playwright>=1.45
+beautifulsoup4>=4.12
+requests>=2.31
+pandas>=2.2
+openpyxl>=3.1
+phonenumbers>=8.13
+dnspython>=2.6
