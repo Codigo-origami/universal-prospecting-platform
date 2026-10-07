@@ -8,6 +8,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [9.0.1] - 2026-10-07
+
+### Fixed
+- `start.bat` closed immediately on the first run: a message with parentheses inside a block broke `install.bat`. The installer was rewritten without fragile blocks.
+- The window now always stays open with a clear message if the installation fails or the app stops.
+- Streamlit's first-run email question no longer blocks the start.
+- The installer checks the real Python version (3.10–3.13) and ignores the Microsoft Store "python" shortcut.
+
 ## [9.0.0] - 2026-10-07 — "Turbo Core"
 
 ### Added
@@ -52,6 +60,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Native Gmail outreach with atomic transactions and global recipient locks.
 - Local SQLite database with automatic schema migrations.
 
-[Unreleased]: https://github.com/Codigo-origami/universal-prospecting-platform/compare/v9.0.0...HEAD
+[Unreleased]: https://github.com/Codigo-origami/universal-prospecting-platform/compare/v9.0.1...HEAD
+[9.0.1]: https://github.com/Codigo-origami/universal-prospecting-platform/compare/v9.0.0...v9.0.1
 [9.0.0]: https://github.com/Codigo-origami/universal-prospecting-platform/compare/v8.12.0...v9.0.0
 [8.12.0]: https://github.com/Codigo-origami/universal-prospecting-platform/releases/tag/v8.12.0

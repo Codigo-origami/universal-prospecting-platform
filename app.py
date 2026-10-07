@@ -19,7 +19,7 @@ License:     MIT License
 """
 
 __author__ = "Codigo Origami - Alejandro Moreno"
-__version__ = "9.0.0"
+__version__ = "9.0.1"
 
 import os
 import io
