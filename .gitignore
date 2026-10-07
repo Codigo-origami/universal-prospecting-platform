@@ -1,0 +1,4 @@
+   .venv/
+   browser_profile/
+   origami_leads.db*
+   __pycache__/
